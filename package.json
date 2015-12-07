@@ -33,19 +33,12 @@
     "browserify": "^9.0.8",
     "chai": "^1.9.1",
     "derequire": "^2.0.0",
-    "es3ify": "^0.1.4",
     "inherits": "^2.0.1",
     "mkdirp": "^0.5.0",
     "mocha": "^2.3.4",
-    "phantomjs": "^1.9.7-5",
     "pouchdb": "github:pouchdb/pouchdb",
-    "request": "^2.36.0",
-    "sauce-connect-launcher": "^0.4.2",
-    "selenium-standalone": "^3.0.2",
     "transform-pouch": "^1.0.2",
-    "uglify-js": "^2.4.13",
-    "watchify": "^3.1.0",
-    "wd": "^0.2.21"
+    "uglify-js": "^2.4.13"
   },
   "homepage": "https://github.com/fiatjaf/pouch-summa",
   "directories": {
