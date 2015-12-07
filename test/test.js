@@ -2,103 +2,47 @@
 
 if (typeof window == 'undefined') {
   var PouchDB = require('pouchdb')
-  
-  var SummaDoc = require('../summadoc')
+  PouchDB.plugin(require('transform-pouch'))
+
   var pouchSumma = require('../')
-  PouchDB.plugin(pouchSumma)
   
   var chai = require('chai')
 }
 var expect = chai.expect
 
 describe('standalone', function () {
+  var normal = [
+    {_id: 'ananan', value: 23, people: { mark: true, anna: true }},
+    {_rev: 'goiaba', _val: 1, items: {a: {ok: true}, b: {ok: false}}},
+    {a: 'asd', b: {_val: 'asd', _rev: '123'}}
+  ]
+  var transf = [
+    {_id: 'ananan', value: {_val: 23}, people: { mark: {_val: true}, anna: {_val: true} }},
+    {_rev: 'goiaba', _val: 1, items: {a: {ok: {_val: true}}, b: {ok: {_val: false}}}},
+    {a: {_val: 'asd'}, b: {_val: 'asd', _rev: '123'}}
+  ]
 
-  it('should transform documents', function () {
-    var o = {
-      _id: 'axolotl',
-      _rev: '3-sdf3rai34b',
-      maria: {
-        name: 'maria',
-        val: 23
-      },
-      thick: {
-        as: {
-          a: {
-            brick: true
-          },
-          _val: 'tijolo'
-        }
-      },
-      ping: {
-        _val: 'pong'
-      }
+  it('should transform docs to summadb format', function () {
+    for (var i = 0; i < normal.length; i++) {
+      expect(pouchSumma.incoming(normal[i])).to.deep.equal(transf[i])
     }
-    var sd = SummaDoc.wrap(o)
-    expect(sd.SummaDoc).to.be.true
-    expect(sd.ping).to.equal('pong')
-    expect(sd._id).to.equal('axolotl')
-    expect(sd.maria.name).to.equal('maria')
-    expect(sd.thick).to.deep.equal({as: {a: {brick: true}, _val: 'tijolo'}})
-    expect(sd.thick.as.a.brick).to.equal(true)
-    expect(sd.thick.as._val).to.equal('tijolo')
-
-    var nd = SummaDoc.unwrap(o)
-    expect(nd).to.deep.equal({
-      _id: 'axolotl',
-      _rev: '3-sdf3rai34b',
-      maria: {
-        name: {
-          _val: 'maria'
-        },
-        val: {
-          _val: 23
-        }
-      },
-      thick: {
-        as: {
-          a: {
-            brick: {
-              _val: true
-            }
-          },
-          _val: 'tijolo'
-        }
-      },
-      ping: {
-        _val: 'pong'
-      }
-    })
   })
 
-  it('shoud add new properties to documents (Proxy or Object.observe)', function (done) {
-    var sd = SummaDoc.wrap({
-      'banana': true
-    })
-    sd.goiaba = {maybe: true}
-    sd.goiaba = 23
-    setTimeout(() => {
-      expect(sd.goiaba._val).to.equal(23)
-      expect(sd.goiaba.maybe).to.equal(true)
-      expect(SummaDoc.unwrap(sd)).to.deep.equal({
-        banana: {_val: true},
-        goiaba: {
-          _val: 23,
-          maybe: {_val: true}
-        }
-      })
-      done()
-    }, 1)
+  it('should should bring docs back', function () {
+    for (var i = 0; i < normal.length; i++) {
+      expect(pouchSumma.incoming(transf[i])).to.deep.equal(normal[i])
+    }
   })
-
 })
 
 describe('with db', function () {
   var db
+  var rawdb
 
   before(function () {
     db = new PouchDB('db-test')
-    db.summa()
-    return db
+    db.transform(pouchSumma)
+    rawdb = new PouchDB('db-test')
   })
 
   after(function () {
@@ -113,73 +57,28 @@ describe('with db', function () {
         canastra: true,
         reino: {
           bonito: true,
-          barato: false
+          barato: false,
+          _val: true
         }
       },
     }
     return db.put(init)
     .then(() => db.get('mana'))
     .then(doc => {
-      expect(doc.SummaDoc).to.be.true
       delete doc._rev
       return doc
     })
     .then(doc => expect(doc).to.deep.equal(init))
   })
 
-  it('should retrieve raw correctly', function () {
-    return db.get('mana')
-    .then(doc => {
-      delete doc._rev
-      return doc
-    })
-    .then(doc => expect(SummaDoc.unwrap(doc)).to.deep.equal({
-      _id: 'mana',
-      fruita: {_val: 'tomate'},
-      queijo: {
-        canastra: {_val: true},
-        reino: {
-          bonito: {_val: true},
-          barato: {_val: false}
-        }
-      }
-    }))
-  })
-
   it('should modify, save again, and it should be good', function () {
     return db.get('mana')
     .then(doc => {
       doc.fruita = 'laranja'
-      expect(SummaDoc.unwrap(doc)).to.deep.equal({
-        _id: 'mana',
-        _rev: doc._rev,
-        fruita: {_val: 'laranja'},
-        queijo: {
-          canastra: {_val: true},
-          reino: {
-            bonito: {_val: true},
-            barato: {_val: false}
-          }
-        }
-      })
       return db.put(doc)
     }).then(() => db.get('mana'))
     .then(doc => {
       delete doc._rev
-      return doc
-    })
-    .then(doc => {
-      expect(SummaDoc.unwrap(doc)).to.deep.equal({
-        _id: 'mana',
-        fruita: {_val: 'laranja'},
-        queijo: {
-          canastra: {_val: true},
-          reino: {
-            bonito: {_val: true},
-            barato: {_val: false}
-          }
-        }
-      })
       return doc
     })
     .then(doc => expect(doc).to.deep.equal({
@@ -189,7 +88,8 @@ describe('with db', function () {
         canastra: true,
         reino: {
           bonito: true,
-          barato: false
+          barato: false,
+          _val: true
         }
       },
     }))
@@ -198,20 +98,19 @@ describe('with db', function () {
   it('should modify more badly, save again, and it should be good', function () {
     return db.get('mana')
     .then(doc => {
-      expect(doc.SummaDoc).to.be.true
       doc['país'] = 'RS'
       doc.cidade = 'porto alegre'
       doc.cidade = {
         _val: 'porto alegre',
         musica: 'deu pra ti'
       }
-      doc.cidade = 'garopaba'
-      doc['país']._val = 'SC'
-      doc.roger = 'cuidem da comunidade'
+      doc['país'] = 'SC'
+      doc.cidade.roger = 'cuidem da comunidade'
+      doc.cidade._val = 'garopaba'
       delete doc.queijo
       delete doc.fruita
       doc.thick = {as: {a: 'brick'}}
-      expect(SummaDoc.unwrap(doc)).to.deep.equal({
+      expect(pouchSumma.incoming(doc)).to.deep.equal({
         _id: 'mana',
         _rev: doc._rev,
         cidade: {
@@ -230,31 +129,9 @@ describe('with db', function () {
       })
       return db.put(doc)
     }).then(() => db.get('mana'))
-    .then(doc => {
-      delete doc._rev
-      return doc
-    })
-    .then(doc => {
-      expect(SummaDoc.unwrap(doc)).to.deep.equal({
-        _id: 'mana',
-        cidade: {
-          _val: 'garopaba',
-          musica: {_val: 'deu pra ti'},
-          roger: {_val: 'cuidem da comunidade'}
-        },
-        'país': {_val: 'SC'},
-        thick: {
-          as: {
-            a: {
-              _val: 'brick'
-            }
-          }
-        }
-      })
-      return doc
-    })
     .then(doc => expect(doc).to.deep.equal({
       _id: 'mana',
+      _rev: doc._rev,
       cidade: {
         _val: 'garopaba',
         musica: 'deu pra ti',
@@ -266,6 +143,56 @@ describe('with db', function () {
           a: 'brick'
         }
       }
+    }))
+  })
+
+  it('should get the summa format if fetching from a non-transformer database', function () {
+    rawdb.allDocs({include_docs: true}).then(rs => rs.map(r => r.doc))
+    .then(docs => expect(docs[0]).to.deep.equal({
+      _id: 'mana',
+      _rev: doc._rev,
+      cidade: {
+        _val: 'garopaba',
+        musica: {_val: 'deu pra ti'},
+        roger: {_val: 'cuidem da comunidade'}
+      },
+      'país': {_val: 'SC'},
+      thick: {
+        as: {
+          a: {
+            _val: 'brick'
+          }
+        }
+      }
+    }))
+  })
+
+  it('should save in the raw db, fetch transformed from the other', function () {
+    var id
+    var rev
+
+    db.post({
+      mannanan: {
+        tagline: {_val: 'o barco da alegria'},
+        type: {_val: 'boat'}
+      },
+      location: {_val: 'isle of mann'},
+      wrong: 'this name should not be here'
+    }).then(r => {
+      id = r.id
+      rev = r.rev
+      return db.allDocs({keys: [r.id], include_docs: true})
+    })
+    .then((rs => rs.map(r => r.doc)))
+    .then(doc => expect(docs[0]).to.deep.equal({
+      _id: id,
+      _rev: rev,
+      mannanan: {
+        tagline: 'o barco da alegria',  
+        type: 'boat'
+      },
+      location: 'isle of mann',
+      wrong: 'this name should not be here'
     }))
   })
   
