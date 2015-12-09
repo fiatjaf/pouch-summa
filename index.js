@@ -25,9 +25,11 @@ function bringUpVal (obj) {
   if (Object.keys(obj).length == 1 && obj._val != undefined) {
     return obj._val
   }
-  for (var k in obj) {
-    if (k[0] == '_') continue
-    obj[k] = bringUpVal(obj[k])
+  if (typeof obj == 'object') {
+    for (var k in obj) {
+      if (k[0] == '_') continue
+      obj[k] = bringUpVal(obj[k])
+    }
   }
   return obj
 }
