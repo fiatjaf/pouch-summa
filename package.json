@@ -1,7 +1,7 @@
 {
   "name": "pouch-summa",
-  "version": "0.0.2",
-  "description": "Makes PouchDB deal better with databases synced with SummaDB.",
+  "version": "0.0.3",
+  "description": "Makes PouchDB deal better with databases synced from SummaDB.",
   "main": "index.js",
   "repository": {
     "type": "git",

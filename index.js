@@ -22,7 +22,7 @@ function  outgoing (doc) {
 }
 
 function bringUpVal (obj) {
-  if (Object.keys(obj).length == 1 && '_val' in obj) {
+  if (Object.keys(obj).length == 1 && obj._val != undefined) {
     return obj._val
   }
   for (var k in obj) {
