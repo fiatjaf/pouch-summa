@@ -1,6 +1,6 @@
 {
   "name": "pouch-summa",
-  "version": "0.0.4",
+  "version": "0.1.0",
   "description": "Makes PouchDB deal better with databases synced from SummaDB.",
   "main": "index.js",
   "repository": {
@@ -14,7 +14,7 @@
     "summa",
     "summadb"
   ],
-  "author": "Giovanni T. Parra",
+  "author": "fiatjaf",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/fiatjaf/pouch-summa/issues"
@@ -23,22 +23,23 @@
     "test-node": "TEST_DB=testdb,http://localhost:5984/testdb istanbul test ./node_modules/mocha/bin/_mocha test/test.js",
     "test-browser": "./bin/test-browser.js",
     "test": "mocha",
-    "build": "mkdirp dist && npm run browserify && npm run min",
+    "build": "mkdir -p dist && npm run browserify && npm run min",
     "browserify": "browserify --standalone pouchSumma index.js > dist/pouchdb.summa.js",
     "min": "uglifyjs dist/pouchdb.summa.js -mc > dist/pouchdb.summa.min.js",
     "prepublish": "npm run build"
   },
-  "dependencies": {},
+  "peerDependencies": {
+    "transform-pouch": "*"
+  },
   "devDependencies": {
-    "browserify": "^9.0.8",
-    "chai": "^1.9.1",
-    "derequire": "^2.0.0",
-    "inherits": "^2.0.1",
-    "mkdirp": "^0.5.0",
-    "mocha": "^2.3.4",
-    "pouchdb": "github:pouchdb/pouchdb",
-    "transform-pouch": "^1.0.2",
-    "uglify-js": "^2.4.13"
+    "pouchdb-node": "^5.4.5",
+    "browserify": "*",
+    "chai": "*",
+    "derequire": "*",
+    "inherits": "*",
+    "mocha": "*",
+    "transform-pouch": "*",
+    "uglify-js": "*"
   },
   "homepage": "https://github.com/fiatjaf/pouch-summa",
   "directories": {
